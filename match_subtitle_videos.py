@@ -55,5 +55,5 @@ def main():
         for sub in subs:
             print(f"  -> Subtitle: {sub}")
 
-tif __name__ == "__main__":
+if __name__ == "__main__":
     main()
