@@ -72,8 +72,8 @@ def process_headers(folder):
                 print(f"Error reading file {filename}: {e}")
                 continue
 
-            # Replace the string in the first 8 lines
-            new_header = [line.replace(unwanted, "") for line in lines[:8]]
+            # Replace the string in the first 6 lines
+            new_header = [line.replace(unwanted, "") for line in lines[:6]]
             lines[:8] = new_header
             try:
                 with open(file_path, 'w', encoding='utf-8') as f:
@@ -92,7 +92,7 @@ def process_headers(folder):
         except Exception as e:
             print(f"Error reading file {filename}: {e}")
             continue
-        header = lines[:8]
+        header = lines[:6]
         print(f"Header of {filename}:")
         for line in header:
             print(line, end="")
