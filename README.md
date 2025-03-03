@@ -54,4 +54,4 @@ Main function that processes all MKV files in the specified folder.
 ## Example
 
 ```sh
-python subs.py D:/rojas/Videos/Python
+python subs.py C:/user/user_name/Videos/
