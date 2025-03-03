@@ -29,7 +29,7 @@ def select_subtitles(subtitle_tracks):
     
     return selected_tracks
 
-def extract_subtitles(file_path, output_dir):
+def extract_subtitles(file_path, output_dir, selected_tracks=None):
     """
     Extracts subtitle tracks from an MKV file.
     """
@@ -69,11 +69,12 @@ def extract_subtitles(file_path, output_dir):
         print(f"[INFO] No subtitle tracks found in: {file_path}")
         return
 
-    # Allow the user to select which subtitle tracks to extract.
-    selected_tracks = select_subtitles(subtitle_tracks)
-    if not selected_tracks:
-        print("[INFO] No subtitle tracks selected.")
-        return
+    # Allow the user to select which subtitle tracks to extract if not provided.
+    if selected_tracks is None:
+        selected_tracks = select_subtitles(subtitle_tracks)
+        if not selected_tracks:
+            print("[INFO] No subtitle tracks selected.")
+            return
 
     # Build the command to extract all selected subtitle tracks.
     # An output file will be created for each track, named based on the original file.
@@ -101,12 +102,25 @@ def main():
     output_dir = os.path.join(folder, "extracted_subtitles")
     os.makedirs(output_dir, exist_ok=True)
 
+    apply_same_selection = False
+    selected_tracks = None
+
     # Process each MKV file in the specified folder
     for filename in os.listdir(folder):
         if filename.lower().endswith(".mkv"):
             file_path = os.path.join(folder, filename)
             print(f"\n[PROCESSING] {file_path}")
-            extract_subtitles(file_path, output_dir)
+
+            if selected_tracks is None or not apply_same_selection:
+                extract_subtitles(file_path, output_dir)
+                if selected_tracks is None:
+                    selected_tracks = select_subtitles(subtitle_tracks)
+                    if not selected_tracks:
+                        print("[INFO] No subtitle tracks selected.")
+                        return
+                apply_same_selection = input("Do you want to apply the same selection to all files? (yes/no): ").strip().lower() == 'yes'
+            else:
+                extract_subtitles(file_path, output_dir, selected_tracks)
 
 if __name__ == "__main__":
     main()
