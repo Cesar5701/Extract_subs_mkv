@@ -36,7 +36,7 @@ def extract_subtitles(file_path):
         match = pattern.search(line)
         if match:
             track_id, track_format = match.groups()
-            ext = ".srt" if "SRT" in track_format.upper() else ".ass" if "ASS" in track_format.upper() else ".sub"
+            ext = ".srt" if "SRT" in track_format.upper() else ".ass" if "ASS" in track_format.upper() or "SUBSTATIONALPHA" in track_format.upper() else ".sub"
             subtitle_tracks.append((track_id, ext))
     
     return subtitle_tracks
