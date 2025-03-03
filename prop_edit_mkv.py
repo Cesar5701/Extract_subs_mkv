@@ -65,6 +65,4 @@ Examples:
     
     print(f"\nProcessing files in: {os.path.abspath(args.dir)}\n")
     process_mkv_files(args.dir)
-    print("\n✅ Process completed. Verify with:")
-    print("   mkvmerge -i file.mkv | findstr /i 'track name language default'")
-    print("   mkvinfo file.mkv | grep -E 'Track|Name|Language|Default'")
+    print("\n✅  Process completed.")
