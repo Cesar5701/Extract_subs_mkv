@@ -3,12 +3,38 @@ import re
 import subprocess
 import sys
 
-def extract_subtitles(file_path):
+def select_subtitles(subtitle_tracks):
+    """
+    Allows the user to select which subtitle tracks to extract.
+    """
+    print("\nAvailable subtitle tracks:")
+    for i, (track_id, ext) in enumerate(subtitle_tracks):
+        print(f"{i + 1}: Track ID {track_id} ({ext})")
+
+    print("\nEnter the numbers of the subtitle tracks you want to extract, separated by commas.")
+    print("Enter 'all' to extract all subtitle tracks.")
+    selection = input("Your choice: ")
+
+    if selection.lower() == 'all':
+        return subtitle_tracks
+
+    selected_tracks = []
+    try:
+        indices = [int(x) - 1 for x in selection.split(',')]
+        for index in indices:
+            if 0 <= index < len(subtitle_tracks):
+                selected_tracks.append(subtitle_tracks[index])
+    except ValueError:
+        print("[ERROR] Invalid selection. No subtitles will be extracted.")
+    
+    return selected_tracks
+
+def extract_subtitles(file_path, output_dir):
     """
     Extracts subtitle tracks from an MKV file.
     """
-    # Get detailed track information from the file using mkvmerge.
-    cmd = ['mkvmerge', '--ui-language', 'en', '--identify-verbose', file_path]
+    # Get track information from the file using mkvmerge.
+    cmd = ['mkvmerge', '--ui-language', 'en', '-i', file_path]
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     # Check if the command executed successfully
@@ -21,15 +47,14 @@ def extract_subtitles(file_path):
     print(f"[DEBUG] mkvmerge output:\n{output}")
 
     subtitle_tracks = []
-    # Pattern to identify subtitle tracks and their languages in the output.
-    # Example line: "Track ID 2: subtitles (SubStationAlpha) [language:eng]"
-    pattern = re.compile(r"Track ID (\d+): subtitles \(([^)]+)\).*?language:(\w+)")
+    # Pattern to identify subtitle tracks in the output.
+    # Example line: "Track ID 2: subtitles (S_TEXT/ASS)"
+    pattern = re.compile(r"Track ID (\d+): subtitles \(([^)]+)\)")
     for line in output.splitlines():
         match = pattern.search(line)
         if match:
             track_id = match.group(1)
             track_format = match.group(2)
-            track_language = match.group(3)
             # Determine the output extension based on the format
             if "SRT" in track_format.upper():
                 ext = ".srt"
@@ -38,18 +63,24 @@ def extract_subtitles(file_path):
             else:
                 ext = ".sub"
             
-            subtitle_tracks.append((track_id, ext, track_language))
+            subtitle_tracks.append((track_id, ext))
     
     if not subtitle_tracks:
         print(f"[INFO] No subtitle tracks found in: {file_path}")
         return
 
-    # Build the command to extract all found subtitle tracks.
+    # Allow the user to select which subtitle tracks to extract.
+    selected_tracks = select_subtitles(subtitle_tracks)
+    if not selected_tracks:
+        print("[INFO] No subtitle tracks selected.")
+        return
+
+    # Build the command to extract all selected subtitle tracks.
     # An output file will be created for each track, named based on the original file.
     cmd_extract = ['mkvextract', 'tracks', file_path]
-    for track_id, ext, lang in subtitle_tracks:
-        base = os.path.splitext(file_path)[0]
-        output_filename = f"{base}_track{track_id}_{lang}{ext}"
+    for track_id, ext in selected_tracks:
+        base = os.path.splitext(os.path.basename(file_path))[0]
+        output_filename = os.path.join(output_dir, f"{base}_track{track_id}{ext}")
         cmd_extract.append(f"{track_id}:{output_filename}")
 
     print("Executing:", " ".join(cmd_extract))
@@ -66,12 +97,16 @@ def main():
         print(f"'{folder}' is not a valid path.")
         return
 
+    # Create a new directory for the extracted subtitles
+    output_dir = os.path.join(folder, "extracted_subtitles")
+    os.makedirs(output_dir, exist_ok=True)
+
     # Process each MKV file in the specified folder
     for filename in os.listdir(folder):
         if filename.lower().endswith(".mkv"):
             file_path = os.path.join(folder, filename)
             print(f"\n[PROCESSING] {file_path}")
-            extract_subtitles(file_path)
+            extract_subtitles(file_path, output_dir)
 
 if __name__ == "__main__":
     main()
